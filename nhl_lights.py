@@ -3,8 +3,10 @@
 import requests
 import datetime
 import pytz
+import argparse
 import dateutil.parser
 from crontab import CronTab
+from time import sleep
 
 BASEURL = "https://statsapi.web.nhl.com/api/v1/"
 NHLBASEURL = "https://statsapi.web.nhl.com/"
@@ -81,62 +83,62 @@ home_team = r.json()['gameData']['teams']['home']['abbreviation']
 away_team = r.json()['gameData']['teams']['away']['abbreviation']
 
 '''
-class CronManager(object):
-    def __init__(self,user):
-        self.user = user
-        self.cron = CronTab(user=True)
-    def write_cron(self, date):
-        # you can set to datetime
-        # job.setall(datetime(2000, 4, 2, 10, 2))
-        self.cron = cron
-        self.job = job
-        job = cron.new(command="python3 /home/joel/python/dev/xyz.py")
-        job.minute.on(time.minute)
-        job.hour.on(time.hour)
-        job.day.on(time.day)
-        job.month.on(time.month)
-        job.enable()
-        #cron.write()
+class GeneralManager(object):
+    def __init__(self, url=None, travel=None, state='Preview'):
+        self.url = url
+        self.travel = travel
+        self.state = state
+        self.score = 0
 
-    def delete_cron(self, job):
-        self.job = job
-        self.cron.remove(job)
-
-
-state = None
+travel = None
 
 now = '2018-01-30'
 #now = datetime.datetime.today().strftime("%Y-%m-%d")
-now2 = datetime.datetime.today().isoformat(timespec='seconds')
-utc_now = datetime.datetime.utcnow().isoformat(timespec='seconds')
+#now2 = datetime.datetime.today().isoformat(timespec='seconds')
+#utc_now = datetime.datetime.utcnow().isoformat(timespec='seconds')
 utc_now2 = datetime.datetime.now(pytz.utc)
 cst = pytz.timezone('US/Central')
 
-def checkgames(state):
-    r = requests.get("{0}schedule?startDate={1}&endDate={1}".format(BASEURL,now))
 
+def build_argparse():
+    parser = argparse.ArgumentParser(description='Flashes Hue lights when your team scores',prog='nhl_lights')
+    parser.add_argument('-LGB', '--LetsGoBlues', action='store_true', help='Flag is used when game is about to start')
+    args = parser.parse_args()
+
+    return args
+
+def checkgames(travel):
+    r = requests.get("{0}schedule?startDate={1}&endDate={1}".format(BASEURL,now))
+    if r.json()['totalItems'] == 0:
+        print('no NHL games today')
+        exit()
     dict = r.json()['dates'][0]['games']
     for l in dict:
         if l['teams']['away']['team']['name'] == 'St. Louis Blues':
-            state = 'away'
+            travel = 'away'
             game_url = l['link']
             game_time = l['gameDate']
             print('team is away and link is: {}'.format(game_url))
         elif l['teams']['home']['team']['name'] == 'St. Louis Blues':
-            state = 'home'
+            travel = 'home'
             game_url = l['link']
             game_time = l['gameDate']
             print('team is home and link is: {}'.format(game_url))
 
-    if state:
+    if travel not args.LetsGoBlues:
         game_date_obj = dateutil.parser.parse(game_time)
         game_time_cst = game_date_obj.astimezone(cst)
 
         sleep_time = (game_date_obj - utc_now2).total_seconds() ## needed if sleeping
         write_cron(game_time_cst) ## needed if crontabbing
-
+        print('Game Later Tonight')
+        exit()
+    elif travel and args.LetsGoBlues:
+        GM.state = travel
+        GM.url = game_url
     else:
         print('No game today, checking tomorrow')
+        exit()
 
 
 
@@ -148,32 +150,61 @@ def gametime(game_url):
     r = requests.get(NHLBASEURL + game_url)
     gametime()
 
-def gametoday(game_url,state):
-    r = requests.get(NHLBASEURL + game_url)
+def game_state(url):
+    r = requests.get(NHLBASEURL + url)
     game_status = r.json()['gameData']['status']['abstractGameState']
+
+    GM.state = game_status
+
+def game_score(url,state):
+    r = requests.get(NHLBASEURL + url)
+    GM.state = r.json()['gameData']['status']['abstractGameState']
     score = r.json()['liveData']['boxscore']['teams'][state]['teamStats']['teamSkaterStats']['goals']
 
-def write_cron(time)
+    if score > GM.score:
+        print('GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOAAAAAALLLLLLLLLLLLLL')
+        # do hue blinking lights
+        GM.score = score
+    elif score < GM.score:
+        print('something wrong or they took back a goal')
+        GM.score = score
+    else:
+        pass
+
+def write_cron(date):
     cron = CronTab(user='joel')
-    job = cron.new(command="python3 /home/joel/python/dev/xyz.py")
-    job.minute.on(time.minute)
-    job.hour.on(time.hour)
-    job.day.on(time.day)
-    job.month.on(time.month)
-    job.enable()
+    job = cron.new(command='python3 /home/joel/python/dev/xyz.py',comment='nhl lights - delete me')
+    # sets all to the datetime object)
+    job.setall(date)
+    #job.minute.on(time.minute)
+    #job.hour.on(time.hour)
+    #job.day.on(time.day)
+    #job.month.on(time.month)
+    #job.enable()
     cron.write()
 
-    return job
+    #return job
 
+def delete_cron():
+    cron=CronTab(user='joel')
+    jobs = cron.find_comment('nhl lights - delete me')
+    for job in jobs:
+        cron.remove(job)
+    cron.write()
 
 def main():
-    checkgames(state)
+    checkgames(travel)
+    while GM.state != 'Started':
+        sleep(60)
+    while GM.state == 'in-progress':
+        game_score(GM.url,GM.state)
+        sleep(5)
+    if GM.state == 'Final':
+        print('game is over')
+        delete_cron()
 
+args = build_argparse()
+GM = GeneralManager()
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
