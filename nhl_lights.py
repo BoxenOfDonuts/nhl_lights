@@ -5,7 +5,7 @@ import datetime
 import pytz
 import argparse
 import dateutil.parser
-from crontab import CronTab
+#from crontab import CronTab
 from time import sleep
 
 BASEURL = "https://statsapi.web.nhl.com/api/v1/"
@@ -125,7 +125,7 @@ def checkgames(travel):
             game_time = l['gameDate']
             print('team is home and link is: {}'.format(game_url))
 
-    if travel not args.LetsGoBlues:
+    if travel and not args.LetsGoBlues:
         game_date_obj = dateutil.parser.parse(game_time)
         game_time_cst = game_date_obj.astimezone(cst)
 
