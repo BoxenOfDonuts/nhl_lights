@@ -5,7 +5,7 @@ import datetime
 import pytz
 import argparse
 import dateutil.parser
-#from crontab import CronTab
+from crontab import CronTab
 from time import sleep
 
 BASEURL = "https://statsapi.web.nhl.com/api/v1/"
@@ -13,7 +13,6 @@ NHLBASEURL = "https://statsapi.web.nhl.com/"
 TEAM_NEXT_GAME = "?expand=team.schedule.next"
 BLUES = "19"
 blues_next_game = "https://statsapi.web.nhl.com/api/v1/teams/19?expand=team.schedule.next"
-
 
 '''
 https://stackoverflow.com/questions/415511/how-to-get-current-time-in-python?rq=1
@@ -25,63 +24,6 @@ https://statsapi.web.nhl.com/api/v1/schedule?expand=schedule.scoringplays&site=e
     gets all the info for the goals scored in today's games
 https://statsapi.web.nhl.com/api/v1/schedule?gamePk=2015020819&expand=schedule.broadcasts,schedule.teams,schedule.linescore,schedule.game.content.media.epg,schedule.scoringplays,schedule.ticket,schedule.decisions,team.leaders&leaderCategories=points,goals,assists&site=en_nhl
     cut the expand quiries to what you want
-
-class TeamBuilding(object):
-    def __init__(self):
-        self.awayteam = None
-        self.hometeam = None
-
-    def do_something(self):
-        pass
-
-class Iter(TeamBuilding):
-    def get_teams(self, json, place):
-        self.json = json
-        self.place = place
-
-        self.awayteam = json['dates'][0]['games'][place]['teams']['away']['team']['name']
-        self.hometeam = json['dates'][0]['games'][place]['teams']['away']['team']['name']
-
-
-r = requests.get(BASEURL + "schedule?startDate=2018-01-24&endDate=2018-01-24")
-
-dict = r.json()['dates'][0]['games']
-for l in dict:
-    print("Away: {}".format(l['teams']['away']['team']['name']))
-    print("Home: {}".format(l['teams']['home']['team']['name']))
-
-
-a = Iter()
-for x in range(0,len(r.json()['dates'][0]['games'])):
-    a.get_teams(r.json(),x)
-
-print(a.team)
- ### /proof of concept stuff ###
-
-#### nhl is in utc ** crying of happiniess ###
-
-
-now = datetime.datetime.today().strftime("%Y-%m-%d")
-now2 = datetime.datetime.today().isoformat(timespec='seconds')
-utc_now = datetime.datetime.utcnow().isoformat(timespec='seconds')
-
-
-r = requests.get(blues_next_game)
-
-game_date = r.json()['teams'][0]['nextGameSchedule']['dates'][0]['date']
-game_url = r.json()['teams'][0]['nextGameSchedule']['dates'][0]['games'][0]['link']
-game_date_utc = r.json()['teams'][0]['nextGameSchedule']['dates'][0]['games'][0]['gameDate']
-
-if utc_now[:10] == game_date:
-    print("match!")
-    r = requests.get(NHLBASEURL + game_url)
-
-    r.json()
-
-game_status = r.json()['gameData']['status']['abstractGameState']
-home_team = r.json()['gameData']['teams']['home']['abbreviation']
-away_team = r.json()['gameData']['teams']['away']['abbreviation']
-
 '''
 class GeneralManager(object):
     def __init__(self, url=None, travel=None, state='Preview'):
@@ -92,10 +34,8 @@ class GeneralManager(object):
 
 travel = None
 
-now = '2018-01-30'
+now = "2018-01-25"
 #now = datetime.datetime.today().strftime("%Y-%m-%d")
-#now2 = datetime.datetime.today().isoformat(timespec='seconds')
-#utc_now = datetime.datetime.utcnow().isoformat(timespec='seconds')
 utc_now2 = datetime.datetime.now(pytz.utc)
 cst = pytz.timezone('US/Central')
 
@@ -134,21 +74,13 @@ def checkgames(travel):
         print('Game Later Tonight')
         exit()
     elif travel and args.LetsGoBlues:
-        GM.state = travel
+        GM.travel = travel
         GM.url = game_url
+        delete_cron()
     else:
         print('No game today, checking tomorrow')
         exit()
 
-
-
-    print(sleep_time)
-    #if state != None:
-    #    gametoday(game_url,state)
-
-def gametime(game_url):
-    r = requests.get(NHLBASEURL + game_url)
-    gametime()
 
 def game_state(url):
     r = requests.get(NHLBASEURL + url)
@@ -173,7 +105,7 @@ def game_score(url,state):
 
 def write_cron(date):
     cron = CronTab(user='joel')
-    job = cron.new(command='python3 /home/joel/python/dev/xyz.py',comment='nhl lights - delete me')
+    job = cron.new(command='python3 /home/joel/python/dev/xyz.py -LGB',comment='nhl lights - delete me')
     # sets all to the datetime object)
     job.setall(date)
     #job.minute.on(time.minute)
@@ -194,14 +126,14 @@ def delete_cron():
 
 def main():
     checkgames(travel)
-    while GM.state != 'Started':
+    while GM.state != 'in-progress': # still guessing on that tag
         sleep(60)
-    while GM.state == 'in-progress':
+    while GM.state == 'in-progress': # still guessing on that tag
         game_score(GM.url,GM.state)
         sleep(5)
     if GM.state == 'Final':
         print('game is over')
-        delete_cron()
+
 
 args = build_argparse()
 GM = GeneralManager()
