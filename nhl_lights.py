@@ -166,7 +166,7 @@ def write_cron(time)
     return job
 
 
-def main():ut
+def main():
     checkgames(state)
 
 
