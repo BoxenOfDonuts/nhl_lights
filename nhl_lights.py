@@ -55,22 +55,25 @@ def build_argparse():
 
 
 def checkgames(travel):
-    r = requests.get("{0}schedule?startDate={1}&endDate={1}".format(BASEURL,now))
-    if r.json()['totalItems'] == 0:
-        print('no NHL games today')
-        exit()
-    dict = r.json()['dates'][0]['games']
-    for l in dict:
-        if l['teams']['away']['team']['name'] == TEAMNAME:
-            travel = 'away'
-            game_url = l['link']
-            game_time = l['gameDate']
-            print('team is away and link is: {}'.format(game_url))
-        elif l['teams']['home']['team']['name'] == TEAMNAME:
-            travel = 'home'
-            game_url = l['link']
-            game_time = l['gameDate']
-            print('team is home and link is: {}'.format(game_url))
+    try:
+        r = requests.get("{0}schedule?startDate={1}&endDate={1}".format(BASEURL,now))
+        if r.json()['totalItems'] == 0:
+            print('no NHL games today')
+            exit()
+        dict = r.json()['dates'][0]['games']
+        for l in dict:
+            if l['teams']['away']['team']['name'] == TEAMNAME:
+                travel = 'away'
+                game_url = l['link']
+                game_time = l['gameDate']
+                print('team is away and link is: {}'.format(game_url))
+            elif l['teams']['home']['team']['name'] == TEAMNAME:
+                travel = 'home'
+                game_url = l['link']
+                game_time = l['gameDate']
+                print('team is home and link is: {}'.format(game_url))
+    except requests.exceptions.RequestException as e:
+        print('Error getting games for today: {}'.format(e))
 
     if travel and not args.LetsGoBlues:
         game_date_obj = dateutil.parser.parse(game_time)
@@ -89,16 +92,20 @@ def checkgames(travel):
 
 
 def game_state(url):
-    r = requests.get(NHLBASEURL + url)
-    game_status = r.json()['gameData']['status']['abstractGameState']
-
-    GM.state = game_status
-
+    try:
+        r = requests.get(NHLBASEURL + url)
+        game_status = r.json()['gameData']['status']['abstractGameState']
+        GM.state = game_status
+    except requests.exceptions.RequestException as e:
+        print('Error: {}'.format(e))
 
 def game_score(url,state):
-    r = requests.get(NHLBASEURL + url)
-    GM.state = r.json()['gameData']['status']['abstractGameState']
-    score = r.json()['liveData']['boxscore']['teams'][state]['teamStats']['teamSkaterStats']['goals']
+    try:
+        r = requests.get(NHLBASEURL + url)
+        GM.state = r.json()['gameData']['status']['abstractGameState']
+        score = r.json()['liveData']['boxscore']['teams'][state]['teamStats']['teamSkaterStats']['goals']
+    except requests.exceptions.RequestException as e:
+        print('Error: {}'.format(e))
 
     if score > GM.score:
         print('GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOAAAAAALLLLLLLLLLLLLL')
@@ -109,7 +116,6 @@ def game_score(url,state):
         GM.score = score
     else:
         pass
-
 
 def write_cron(date):
     cron = CronTab(user=CRONUSER)
