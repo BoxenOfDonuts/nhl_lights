@@ -16,12 +16,14 @@ import argparse
 import dateutil.parser
 from crontab import CronTab
 from time import sleep
+from phue import Bridge
 
 BASEURL = "https://statsapi.web.nhl.com/api/v1/"
 NHLBASEURL = "https://statsapi.web.nhl.com/"
 travel = None
 CRONUSER = ''
 TEAMNAME = 'St. Louis Blues'
+lights = Bridge('')
 
 #now = "2018-01-25"
 now = datetime.datetime.today().strftime("%Y-%m-%d")
@@ -45,6 +47,14 @@ class GeneralManager(object):
         self.state = state
         self.score = 0
 
+class Bulbinfo(object):
+    def get_settings(self, on, sat, bri, hue):
+        self.on = on
+        self.sat = sat
+        self.bri = bri
+        self.hue = hue
+
+        self.info = {'on':on, 'sat':sat, 'bri':bri, 'hue':hue}
 
 def build_argparse():
     parser = argparse.ArgumentParser(description='Flashes Hue lights when your team scores',prog='nhl_lights')
