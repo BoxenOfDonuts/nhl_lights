@@ -1,5 +1,14 @@
 #!/usr/bin/python3.6
 
+"""
+Flashes Hue lights when your team scores
+
+Author:
+Version: .5
+Modified 01/30/18
+Python Version: 3.6
+"""
+
 import requests
 import datetime
 import pytz
@@ -10,9 +19,13 @@ from time import sleep
 
 BASEURL = "https://statsapi.web.nhl.com/api/v1/"
 NHLBASEURL = "https://statsapi.web.nhl.com/"
-TEAM_NEXT_GAME = "?expand=team.schedule.next"
-BLUES = "19"
-blues_next_game = "https://statsapi.web.nhl.com/api/v1/teams/19?expand=team.schedule.next"
+travel = None
+CRONUSER = ''
+TEAMNAME = 'St. Louis Blues'
+
+#now = "2018-01-25"
+now = datetime.datetime.today().strftime("%Y-%m-%d")
+cst = pytz.timezone('US/Central')
 
 '''
 https://stackoverflow.com/questions/415511/how-to-get-current-time-in-python?rq=1
@@ -32,13 +45,6 @@ class GeneralManager(object):
         self.state = state
         self.score = 0
 
-travel = None
-
-now = "2018-01-25"
-#now = datetime.datetime.today().strftime("%Y-%m-%d")
-utc_now2 = datetime.datetime.now(pytz.utc)
-cst = pytz.timezone('US/Central')
-
 
 def build_argparse():
     parser = argparse.ArgumentParser(description='Flashes Hue lights when your team scores',prog='nhl_lights')
@@ -47,6 +53,7 @@ def build_argparse():
 
     return args
 
+
 def checkgames(travel):
     r = requests.get("{0}schedule?startDate={1}&endDate={1}".format(BASEURL,now))
     if r.json()['totalItems'] == 0:
@@ -54,12 +61,12 @@ def checkgames(travel):
         exit()
     dict = r.json()['dates'][0]['games']
     for l in dict:
-        if l['teams']['away']['team']['name'] == 'St. Louis Blues':
+        if l['teams']['away']['team']['name'] == TEAMNAME:
             travel = 'away'
             game_url = l['link']
             game_time = l['gameDate']
             print('team is away and link is: {}'.format(game_url))
-        elif l['teams']['home']['team']['name'] == 'St. Louis Blues':
+        elif l['teams']['home']['team']['name'] == TEAMNAME:
             travel = 'home'
             game_url = l['link']
             game_time = l['gameDate']
@@ -69,7 +76,6 @@ def checkgames(travel):
         game_date_obj = dateutil.parser.parse(game_time)
         game_time_cst = game_date_obj.astimezone(cst)
 
-        sleep_time = (game_date_obj - utc_now2).total_seconds() ## needed if sleeping
         write_cron(game_time_cst) ## needed if crontabbing
         print('Game Later Tonight')
         exit()
@@ -88,6 +94,7 @@ def game_state(url):
 
     GM.state = game_status
 
+
 def game_score(url,state):
     r = requests.get(NHLBASEURL + url)
     GM.state = r.json()['gameData']['status']['abstractGameState']
@@ -103,26 +110,21 @@ def game_score(url,state):
     else:
         pass
 
+
 def write_cron(date):
-    cron = CronTab(user='joel')
+    cron = CronTab(user=CRONUSER)
     job = cron.new(command='python3 /home/joel/python/dev/xyz.py -LGB',comment='nhl lights - delete me')
-    # sets all to the datetime object)
-    job.setall(date)
-    #job.minute.on(time.minute)
-    #job.hour.on(time.hour)
-    #job.day.on(time.day)
-    #job.month.on(time.month)
-    #job.enable()
+    job.setall(date) # sets all to the datetime object)
     cron.write()
 
-    #return job
 
 def delete_cron():
-    cron=CronTab(user='joel')
+    cron=CronTab(user=CRONUSER)
     jobs = cron.find_comment('nhl lights - delete me')
     for job in jobs:
         cron.remove(job)
     cron.write()
+
 
 def main():
     checkgames(travel)
