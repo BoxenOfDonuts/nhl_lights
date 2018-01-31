@@ -54,7 +54,10 @@ class Bulbinfo(object):
         self.bri = bri
         self.hue = hue
 
-        self.info = {'on':on, 'sat':sat, 'bri':bri, 'hue':hue}
+        self.info = {'on': on, 'sat': sat, 'bri': bri, 'hue': hue}
+
+    def flash_lights(self):
+        self.goal_flash = {'alert':'select'}
 
 def build_argparse():
     parser = argparse.ArgumentParser(description='Flashes Hue lights when your team scores',prog='nhl_lights')
@@ -144,9 +147,9 @@ def delete_cron():
 
 def main():
     checkgames(travel)
-    while GM.state != 'in-progress': # still guessing on that tag
+    while GM.state != 'In Progress': # still guessing on that tag
         sleep(60)
-    while GM.state == 'in-progress': # still guessing on that tag
+    while GM.state == 'In Progress': # still guessing on that tag
         game_score(GM.url,GM.state)
         sleep(5)
     if GM.state == 'Final':
