@@ -151,9 +151,10 @@ def delete_cron():
 def main():
     checkgames(travel)
     while GM.state != 'Live': # still guessing on that tag
+        game_status(GM.url)
         sleep(60)
     while GM.state == 'Live': # still guessing on that tag
-        game_score(GM.url,GM.state)
+        game_score(GM.url,GM.travel)
         sleep(5)
     if GM.state == 'Final':
         print('game is over')
