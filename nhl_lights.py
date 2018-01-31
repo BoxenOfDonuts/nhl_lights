@@ -105,6 +105,9 @@ def checkgames(travel):
 
 
 def game_state(url):
+    # abstract == live during game
+    # detailed == In Progress
+    # coded game stat & code == 3
     try:
         r = requests.get(NHLBASEURL + url)
         game_status = r.json()['gameData']['status']['abstractGameState']
@@ -147,9 +150,9 @@ def delete_cron():
 
 def main():
     checkgames(travel)
-    while GM.state != 'In Progress': # still guessing on that tag
+    while GM.state != 'Live': # still guessing on that tag
         sleep(60)
-    while GM.state == 'In Progress': # still guessing on that tag
+    while GM.state == 'Live': # still guessing on that tag
         game_score(GM.url,GM.state)
         sleep(5)
     if GM.state == 'Final':
