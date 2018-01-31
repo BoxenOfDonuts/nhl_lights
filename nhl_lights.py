@@ -1,14 +1,5 @@
 #!/usr/bin/python3.6
 
-"""
-Flashes Hue lights when your team scores
-
-Author:
-Version: .5
-Modified 01/30/18
-Python Version: 3.6
-"""
-
 import requests
 import datetime
 import pytz
@@ -16,14 +7,15 @@ import argparse
 import dateutil.parser
 from crontab import CronTab
 from time import sleep
-from phue import Bridge
 
 BASEURL = "https://statsapi.web.nhl.com/api/v1/"
 NHLBASEURL = "https://statsapi.web.nhl.com/"
+BRIDGEIP = ''
+HUEUSER = ''
+BRIDGEAPI = 'http://{}/api/{}'.format(BRIDGEIP, HUEUSER)
 travel = None
 CRONUSER = ''
 TEAMNAME = 'St. Louis Blues'
-lights = Bridge('')
 
 #now = "2018-01-25"
 now = datetime.datetime.today().strftime("%Y-%m-%d")
@@ -58,6 +50,25 @@ class Bulbinfo(object):
 
     def flash_lights(self):
         self.goal_flash = {'alert':'select'}
+
+def bulb_current():
+    r = requests.get('{}/groups/1'.format(BRIDGEAPI)).json()['action']
+    if not r['on']:
+        return False
+    else:
+        return {'sat': r['sat'], 'bri': r['bri'], 'hue': r['hue'], 'alert': 'none'}
+
+
+def flash():
+    a = bulb_current()
+    flash_color = {'sat': 254, 'bri': 254, 'hue': 65084, 'alert': 'lselect'}
+    if not a:
+        print('Lights off, not flashing')
+    else:
+        r = requests.put('{}/groups/1/action'.format(BRIDGEAPI), json=flash_color)
+        sleep(2)
+        r = requests.put('{}/groups/1/action'.format(BRIDGEAPI), json=a)
+
 
 def build_argparse():
     parser = argparse.ArgumentParser(description='Flashes Hue lights when your team scores',prog='nhl_lights')
@@ -125,7 +136,7 @@ def game_score(url,state):
 
     if score > GM.score:
         print('GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOAAAAAALLLLLLLLLLLLLL')
-        # do hue blinking lights
+        flash()
         GM.score = score
     elif score < GM.score:
         print('something wrong or they took back a goal')
