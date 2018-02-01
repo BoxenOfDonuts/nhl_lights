@@ -4,20 +4,23 @@ import requests
 import datetime
 import pytz
 import argparse
+import configparser
 import dateutil.parser
 from crontab import CronTab
 from time import sleep
 
+config = configparser.ConfigParser()
+config.read('config.ini')
+
 BASEURL = "https://statsapi.web.nhl.com/api/v1/"
 NHLBASEURL = "https://statsapi.web.nhl.com/"
-BRIDGEIP = ''
-HUEUSER = ''
+BRIDGEIP = config['hue']['ip']
+HUEUSER = config['hue']['user']
 BRIDGEAPI = 'http://{}/api/{}'.format(BRIDGEIP, HUEUSER)
 travel = None
-CRONUSER = ''
-TEAMNAME = 'St. Louis Blues'
+CRONUSER = config['user']['user']
+TEAMNAME = config['user']['teamname']
 
-#now = "2018-01-25"
 now = datetime.datetime.today().strftime("%Y-%m-%d")
 cst = pytz.timezone('US/Central')
 
@@ -32,6 +35,8 @@ https://statsapi.web.nhl.com/api/v1/schedule?expand=schedule.scoringplays&site=e
 https://statsapi.web.nhl.com/api/v1/schedule?gamePk=2015020819&expand=schedule.broadcasts,schedule.teams,schedule.linescore,schedule.game.content.media.epg,schedule.scoringplays,schedule.ticket,schedule.decisions,team.leaders&leaderCategories=points,goals,assists&site=en_nhl
     cut the expand quiries to what you want
 '''
+
+
 class GeneralManager(object):
     def __init__(self, url=None, travel=None, state='Preview'):
         self.url = url
@@ -39,17 +44,30 @@ class GeneralManager(object):
         self.state = state
         self.score = 0
 
+'''
 class Bulbinfo(object):
-    def get_settings(self, on, sat, bri, hue):
-        self.on = on
-        self.sat = sat
-        self.bri = bri
-        self.hue = hue
-
-        self.info = {'on': on, 'sat': sat, 'bri': bri, 'hue': hue}
+    def __init__(self):
+        self.on = None
+        self.info = None
+        self.flash_color = None
+        
+    def get_settings(self):
+        try:
+            r = requests.get('{}/groups/1'.format(BRIDGEAPI)).json()['action']
+            self.on = r['on']
+            self.info = {'sat': r['sat'], 'bri': r['bri'], 'hue': r['hue'], 'alert': 'none'}
+        except requests.exceptions.RequestException as e:
+            print('could not get current state: {}'.format(e))
 
     def flash_lights(self):
-        self.goal_flash = {'alert':'select'}
+        self.flash_color = {'sat': 254, 'bri': 254, 'hue': 65084, 'alert': 'lselect'}
+        try:
+            r = requests.put('{}/groups/1/action'.format(BRIDGEAPI), json=self.flash_color)
+            sleep(2)
+            r = requests.put('{}/groups/1/action'.format(BRIDGEAPI), json=self.info)
+        except requests.exceptions.RequestException as e:
+            print('could not alert lights: {}'.format(e))
+'''
 
 def bulb_current():
     r = requests.get('{}/groups/1'.format(BRIDGEAPI)).json()['action']
@@ -126,6 +144,7 @@ def game_state(url):
     except requests.exceptions.RequestException as e:
         print('Error: {}'.format(e))
 
+
 def game_score(url,state):
     try:
         r = requests.get(NHLBASEURL + url)
@@ -144,6 +163,7 @@ def game_score(url,state):
     else:
         pass
 
+
 def write_cron(date):
     cron = CronTab(user=CRONUSER)
     job = cron.new(command='python3 /home/joel/python/dev/xyz.py -LGB',comment='nhl lights - delete me')
@@ -161,10 +181,11 @@ def delete_cron():
 
 def main():
     checkgames(travel)
-    while GM.state != 'Live': # still guessing on that tag
-        game_status(GM.url)
+    while GM.state != 'Live' or GM.state != 'Final':
+        game_state(GM.url)
         sleep(60)
-    while GM.state == 'Live': # still guessing on that tag
+    print('Game is now {}'.format(GM.state))
+    while GM.state == 'Live':
         game_score(GM.url,GM.travel)
         sleep(5)
     if GM.state == 'Final':
