@@ -181,7 +181,7 @@ def delete_cron():
 
 def main():
     checkgames(travel)
-    while GM.state != 'Live' or GM.state != 'Final':
+    while GM.state != 'Live' and GM.state != 'Final':
         game_state(GM.url)
         sleep(60)
     print('Game is now {}'.format(GM.state))
