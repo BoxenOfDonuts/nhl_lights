@@ -6,11 +6,13 @@ import pytz
 import argparse
 import configparser
 import dateutil.parser
+import logging
 from crontab import CronTab
 from time import sleep
 
 config = configparser.ConfigParser()
 config.read('config.ini')
+logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S',level=logging.INFO, filename='nhl_lights.log')
 
 BASEURL = "https://statsapi.web.nhl.com/api/v1/"
 NHLBASEURL = "https://statsapi.web.nhl.com/"
@@ -50,7 +52,7 @@ class Bulbinfo(object):
         self.on = None
         self.info = None
         self.flash_color = None
-        
+
     def get_settings(self):
         try:
             r = requests.get('{}/groups/1'.format(BRIDGEAPI)).json()['action']
@@ -81,7 +83,7 @@ def flash():
     a = bulb_current()
     flash_color = {'sat': 254, 'bri': 254, 'hue': 65084, 'alert': 'lselect'}
     if not a:
-        print('Lights off, not flashing')
+        logging.info('Lights off, not flashing')
     else:
         r = requests.put('{}/groups/1/action'.format(BRIDGEAPI), json=flash_color)
         sleep(2)
@@ -100,7 +102,7 @@ def checkgames(travel):
     try:
         r = requests.get("{0}schedule?startDate={1}&endDate={1}".format(BASEURL,now))
         if r.json()['totalItems'] == 0:
-            print('no NHL games today')
+            logging.info('no NHL games today')
             exit()
         dict = r.json()['dates'][0]['games']
         for l in dict:
@@ -108,28 +110,30 @@ def checkgames(travel):
                 travel = 'away'
                 game_url = l['link']
                 game_time = l['gameDate']
-                print('team is away and link is: {}'.format(game_url))
+                GM.state = l['status']['abstractGameState']
+                logging.info('team is away and link is: {}'.format(game_url))
             elif l['teams']['home']['team']['name'] == TEAMNAME:
                 travel = 'home'
                 game_url = l['link']
                 game_time = l['gameDate']
-                print('team is home and link is: {}'.format(game_url))
+                GM.state = l['status']['abstractGameState']
+                logging.info('team is home and link is: {}'.format(game_url))
     except requests.exceptions.RequestException as e:
-        print('Error getting games for today: {}'.format(e))
+        logging.error('Error getting games for today: {}'.format(e))
 
     if travel and not args.LetsGoBlues:
         game_date_obj = dateutil.parser.parse(game_time)
         game_time_cst = game_date_obj.astimezone(cst)
 
         write_cron(game_time_cst) ## needed if crontabbing
-        print('Game Later Tonight')
+        logging.info('Game Later Tonight')
         exit()
     elif travel and args.LetsGoBlues:
         GM.travel = travel
         GM.url = game_url
         delete_cron()
     else:
-        print('No game today, checking tomorrow')
+        logging.info('No game today, checking tomorrow')
         exit()
 
 
@@ -142,7 +146,7 @@ def game_state(url):
         game_status = r.json()['gameData']['status']['abstractGameState']
         GM.state = game_status
     except requests.exceptions.RequestException as e:
-        print('Error: {}'.format(e))
+        logging.error('Error: {}'.format(e))
 
 
 def game_score(url,state):
@@ -151,14 +155,14 @@ def game_score(url,state):
         GM.state = r.json()['gameData']['status']['abstractGameState']
         score = r.json()['liveData']['boxscore']['teams'][state]['teamStats']['teamSkaterStats']['goals']
     except requests.exceptions.RequestException as e:
-        print('Error: {}'.format(e))
+        logging.info('Error: {}'.format(e))
 
     if score > GM.score:
-        print('GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOAAAAAALLLLLLLLLLLLLL')
+        logging.info('GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOAAAAAALLLLLLLLLLLLLL')
         flash()
         GM.score = score
     elif score < GM.score:
-        print('something wrong or they took back a goal')
+        logging.info('something wrong or they took back a goal')
         GM.score = score
     else:
         pass
@@ -180,16 +184,18 @@ def delete_cron():
 
 
 def main():
+    logging.info('---------------- Script Starting {} ----------------'.format(now))
     checkgames(travel)
+    logging.info('Game state is {} on cron start'.format(GM.state))
     while GM.state != 'Live' and GM.state != 'Final':
         game_state(GM.url)
         sleep(60)
-    print('Game is now {}'.format(GM.state))
+    logging.info('Game switched to: {}'.format(GM.state))
     while GM.state == 'Live':
         game_score(GM.url,GM.travel)
         sleep(5)
     if GM.state == 'Final':
-        print('game is over')
+        logging.info('Game is over')
 
 
 args = build_argparse()
