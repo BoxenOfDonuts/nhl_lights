@@ -7,12 +7,15 @@ import argparse
 import configparser
 import dateutil.parser
 import logging
+import os
 from crontab import CronTab
 from time import sleep
 
+configfile = os.path.join(os.path.dirname(__file__), 'config.ini')
+logfile = os.path.join(os.path.dirname(__file__), 'nhl_lights.log')
 config = configparser.ConfigParser()
-config.read('config.ini')
-logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S',level=logging.INFO, filename='nhl_lights.log')
+config.read(configfile)
+logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S',level=logging.INFO, filename=logfile)
 
 BASEURL = "https://statsapi.web.nhl.com/api/v1/"
 NHLBASEURL = "https://statsapi.web.nhl.com/"
@@ -170,7 +173,7 @@ def game_score(url,state):
 
 def write_cron(date):
     cron = CronTab(user=CRONUSER)
-    job = cron.new(command='python3 /home/joel/python/dev/xyz.py -LGB',comment='nhl lights - delete me')
+    job = cron.new(command='python {} -LGB'.format(os.path.abspath(__file__)),comment='nhl lights - delete me')
     job.setall(date) # sets all to the datetime object)
     cron.write()
 
