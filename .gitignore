@@ -4,3 +4,6 @@ venv/
 
 # Config
 config.ini
+
+#log
+*.log
