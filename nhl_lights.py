@@ -6,18 +6,17 @@ import pytz
 import argparse
 import dateutil.parser
 import logging
-import logmatic
-import socket
 import constants
 from crontab import CronTab
 from time import sleep
+from pythonjsonlogger import jsonlogger
 
 #logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S',level=logging.INFO, filename=constants.LOGFILE)
 logger = logging.getLogger()
-handler = logging.StreamHandler()
-handler.setFormatter(logmatic.JsonFormatter(extra={'hostname': socket.gethostname()}))
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+logHandler = logging.StreamHandler(filename=constants.LOGFILE)
+formatter = jsonlogger.JsonFormatter()
+logHandler.setFormatter(formatter)
+logger.addHandler(logHandler)
 
 now = datetime.datetime.today().strftime("%Y-%m-%d")
 cst = pytz.timezone('US/Central')
