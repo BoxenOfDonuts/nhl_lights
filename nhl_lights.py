@@ -12,11 +12,12 @@ from time import sleep
 from pythonjsonlogger import jsonlogger
 
 #logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S',level=logging.INFO, filename=constants.LOGFILE)
-logger = logging.getLogger()
-logHandler = logging.StreamHandler(filename=constants.LOGFILE)
-formatter = jsonlogger.JsonFormatter()
+logHandler = logging.FileHandler(filename=constants.LOGFILE)
+formatter = jsonlogger.JsonFormatter('%(asctime)s %(message)s')
 logHandler.setFormatter(formatter)
-logger.addHandler(logHandler)
+logging.getLogger().addHandler(logHandler)
+logging.getLogger().setLevel(logging.INFO)
+logger = logging.getLogger()
 
 now = datetime.datetime.today().strftime("%Y-%m-%d")
 cst = pytz.timezone('US/Central')
