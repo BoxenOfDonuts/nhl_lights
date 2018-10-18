@@ -8,7 +8,7 @@ Constants File
 """
 
 CONFIGFILE = os.path.join(os.path.dirname(__file__), 'config.ini')
-LOGFILE = os.path.join(os.path.dirname(__file__), 'nhl_lights.log')
+LOGFILE = '/mnt/nhl_lights/nhl_lights.log'
 SCRIPTPATH = os.path.abspath(__file__)
 
 
