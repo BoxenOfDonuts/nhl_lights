@@ -9,7 +9,7 @@ Constants File
 
 CONFIGFILE = os.path.join(os.path.dirname(__file__), 'config.ini')
 LOGFILE = '/mnt/nhl_lights/nhl_lights.log'
-SCRIPTPATH = os.path.abspath(__file__)
+SCRIPTPATH = os.path.join(os.path.dirname(__file__), 'nhl_lights.py')
 
 
 config = configparser.ConfigParser()
