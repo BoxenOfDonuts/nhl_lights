@@ -158,6 +158,8 @@ def game_score(url,state):
 
     if score > GM.score:
         logger.info('GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOAAAAAALLLLLLLLLLLLLL')
+        # delay due to TV
+        sleep(10)
         flash()
         GM.score = score
     elif score < GM.score:
