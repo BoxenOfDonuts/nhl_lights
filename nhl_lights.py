@@ -171,7 +171,7 @@ def game_score(url,state):
 
 def write_cron(date):
     cron = CronTab(user=constants.CRONUSER)
-    job = cron.new(command='python {} -LGB'.format(constants.SCRIPTPATH), comment='nhl lights - delete me')
+    job = cron.new(command='~/Projects/python/nhl_lights/venv/bin/python3 {} -LGB'.format(constants.SCRIPTPATH), comment='nhl lights - delete me')
     job.setall(date) # sets all to the datetime object)
     cron.write()
 
