@@ -157,13 +157,13 @@ def game_score(url,state):
         logger.error('Error', extra={'error': e})
 
     if score > GM.score:
-        logger.info('GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOAAAAAALLLLLLLLLLLLLL')
+        logger.info('GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOAAAAAALLLLLLLLLLLLLL', extra={'score': score, 'gm.score': GM.score })
         # delay due to TV
         sleep(10)
         flash()
         GM.score = score
     elif score < GM.score:
-        logger.info('something wrong or they took back a goal')
+        logger.info('something wrong or they took back a goal', extra={'score': score, 'gm.score': GM.score})
         GM.score = score
     else:
         pass
@@ -196,7 +196,7 @@ def main():
         game_score(GM.url,GM.travel)
         sleep(5)
     if GM.state == 'Final':
-        logger.info('Game is over')
+        logger.info('Game is over', extra={'state': GM.state})
 
 
 args = build_argparse()
