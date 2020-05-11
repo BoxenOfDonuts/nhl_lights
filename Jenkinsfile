@@ -3,11 +3,11 @@ node('linuxVM') {
     printMessage("Pipeline Start")
 
     stage("Fetch Source Code") {
-        steps {
-            git branch: env.BRANCH_NAME,
-                credentialsId: '14bc68af-bf7a-4bf6-aa8a-6e99940d3413',
-                url: 'ssh://git@https://github.com/BoxenOfDonuts/nhl_lights.git'
-        }
+
+        git branch: env.BRANCH_NAME,
+            credentialsId: '14bc68af-bf7a-4bf6-aa8a-6e99940d3413',
+            url: 'ssh://git@https://github.com/BoxenOfDonuts/nhl_lights.git'
+
     }
 
     stage("Install Requirements") {
