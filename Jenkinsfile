@@ -23,7 +23,7 @@ node('linuxVM') {
         dir('/home/joel/Projects/tmp/') {
                 printMessage("deploying develop branch")
                 gitSSH()
-                sh 'make install'
+                virtualenv()
          }
 
         } else {
@@ -42,4 +42,11 @@ def gitSSH() {
     git branch: env.BRANCH_NAME,
         credentialsId: '14bc68af-bf7a-4bf6-aa8a-6e99940d3413',
         url: 'ssh://git@github.com/BoxenOfDonuts/nhl_lights.git'
+}
+
+def virtualenv() {
+    sh """
+    . venv/bin/activate
+    pip install -r requirements.txt
+    """
 }
