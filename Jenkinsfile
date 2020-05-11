@@ -17,7 +17,7 @@ node('linuxVM') {
     stage("Deploy") {
         if (env.BRANCH_NAME == "master") {
             printMessage("deploying master branch")
-        } else if (env.BRANCH_NAME == 'develop')
+        } else if (env.BRANCH_NAME == 'develop') {
             printMessage("deploying develop branch")
 
             sh 'cd /home/joel/Projects/tmp/'
