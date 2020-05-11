@@ -8,9 +8,9 @@ node('linuxVM') {
 
     }
 
-    stage("Install Requirements") {
-        sh 'make install'
-    }
+    #stage("Install Requirements") {
+    #    sh 'make install'
+    #}
 
     stage("Run Tests") {
         printMessage("haha no testing here")
@@ -20,11 +20,11 @@ node('linuxVM') {
         if (env.BRANCH_NAME == "master") {
             printMessage("deploying master branch")
         } else if (env.BRANCH_NAME == 'develop') {
-            printMessage("deploying develop branch")
-
-            sh 'cd /home/joel/Projects/tmp/'
-            gitSSH()
-            sh 'make install'
+        dir('/home/joel/Projects/tmp/') {
+                printMessage("deploying develop branch")
+                gitSSH()
+                sh 'make install'
+         }
 
         } else {
             printMessage("no deployment specified for this branch")
