@@ -19,13 +19,13 @@ node('linuxVM') {
     stage("Deploy") {
         if (env.BRANCH_NAME == "master") {
             printMessage("deploying master branch")
-            dir('/home/joel/Projects/python/') {
+            dir('/home/joel/Projects/python/nhl_lights/') {
                     printMessage("deploying develop branch")
                     gitSSH()
                     virtualenv()
              }
         } else if (env.BRANCH_NAME == 'develop') {
-        dir('/home/joel/Projects/tmp/') {
+        dir('/home/joel/Projects/tmp/nhl_lights/') {
                 printMessage("deploying develop branch")
                 gitSSH()
                 virtualenv()
