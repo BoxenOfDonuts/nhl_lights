@@ -4,9 +4,7 @@ node('linuxVM') {
 
     stage("Fetch Source Code") {
 
-        git branch: env.BRANCH_NAME,
-            credentialsId: '14bc68af-bf7a-4bf6-aa8a-6e99940d3413',
-            url: 'ssh://git@github.com/BoxenOfDonuts/nhl_lights.git'
+        gitSSH()
 
     }
 
@@ -15,7 +13,7 @@ node('linuxVM') {
     }
 
     stage("Run Tests") {
-        sh 'python test_functions.py'
+        printMessage("haha no testing here")
     }
 
     stage("Deploy") {
@@ -25,9 +23,7 @@ node('linuxVM') {
             printMessage("deploying develop branch")
 
             sh 'cd /home/joel/Projects/tmp/'
-            git branch: env.BRANCH_NAME,
-                credentialsId: '14bc68af-bf7a-4bf6-aa8a-6e99940d3413',
-                url: 'ssh://git@github.com/BoxenOfDonuts/nhl_lights.git'
+            gitSSH()
             sh 'make install'
 
         } else {
@@ -40,4 +36,10 @@ node('linuxVM') {
 
 def printMessage(message) {
     echo "${message}"
+}
+
+def gitSSH() {
+    git branch: env.BRANCH_NAME,
+        credentialsId: '14bc68af-bf7a-4bf6-aa8a-6e99940d3413',
+        url: 'ssh://git@github.com/BoxenOfDonuts/nhl_lights.git'
 }
