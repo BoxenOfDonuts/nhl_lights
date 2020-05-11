@@ -8,9 +8,9 @@ node('linuxVM') {
 
     }
 
-    #stage("Install Requirements") {
-    #    sh 'make install'
-    #}
+    //stage("Install Requirements") {
+    //    sh 'make install'
+    //}
 
     stage("Run Tests") {
         printMessage("haha no testing here")
