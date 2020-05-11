@@ -1,5 +1,5 @@
 
-node('linuxVM' {
+node('linuxVM') {
     printMessage("Pipeline Start")
 
     stage("Fetch Source Code") {
