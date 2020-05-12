@@ -20,9 +20,12 @@ node('linuxVM') {
         if (env.BRANCH_NAME == "master") {
             printMessage("deploying master branch")
             dir('/home/joel/Projects/python/nhl_lights/') {
-                    printMessage("deploying develop branch")
+                    printMessage("deploying master branch")
+                    deleteDir()
                     gitSSH()
                     virtualenv()
+                    copy_config()
+                    sh 'rm -r ../*@tmp'
              }
         } else if (env.BRANCH_NAME == 'develop') {
         dir('/home/joel/Projects/tmp/nhl_lights/') {
@@ -31,6 +34,7 @@ node('linuxVM') {
                 gitSSH()
                 virtualenv()
                 copy_config()
+                sh 'rm -r ../*@tmp'
          }
 
         } else {
