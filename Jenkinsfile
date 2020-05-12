@@ -1,9 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        node {
+            label 'linuxVM'
+        }
+    }
     stages {
-        node('linuxVM') {
-            printMessage("Pipeline Start")
-
             stage("Run Tests") {
                 printMessage("haha no testing here")
             }
@@ -38,7 +39,6 @@ pipeline {
                     printMessage("no deployment specified for this branch")
                 }
             }
-        }
     }
     post {
         always {
