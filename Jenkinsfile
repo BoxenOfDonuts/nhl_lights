@@ -17,28 +17,41 @@ node('linuxVM') {
 
     stage("Deploy") {
 
-        withCredentials([file(credentialsId: '3aef7477-0710-48ee-b0de-fb207aeeb069', variable: 'FILE')]) {
-            sh 'cp $FILE config.ini'
-        }
-
         if (env.BRANCH_NAME == "master") {
             printMessage("deploying master branch")
             dir('/home/joel/Projects/python/nhl_lights/') {
                     printMessage("deploying develop branch")
                     gitSSH()
                     virtualenv()
+
+                    withCredentials([file(credentialsId: '3aef7477-0710-48ee-b0de-fb207aeeb069', variable: 'FILE')]) {
+                        sh 'cp $FILE config.ini'
+                }
              }
         } else if (env.BRANCH_NAME == 'develop') {
         dir('/home/joel/Projects/tmp/nhl_lights/') {
                 printMessage("deploying develop branch")
                 gitSSH()
                 virtualenv()
-         }
+
+                withCredentials([file(credentialsId: '3aef7477-0710-48ee-b0de-fb207aeeb069', variable: 'FILE')]) {
+                    sh 'cp $FILE config.ini'
+                }
+
+        }
 
         } else {
             printMessage("no deployment specified for this branch")
         }
     }
+
+    post {
+        always {
+            printMessage("clean up after yourself")
+            cleanWs()
+        }
+    }
+
 
     printMessage("Pipeline End")
 }
