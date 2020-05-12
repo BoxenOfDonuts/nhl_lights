@@ -25,7 +25,6 @@ node('linuxVM') {
                     gitSSH()
                     virtualenv()
                     copy_config()
-                    sh 'rm -r ../*@tmp'
              }
         } else if (env.BRANCH_NAME == 'develop') {
         dir('/home/joel/Projects/tmp/nhl_lights/') {
@@ -34,7 +33,6 @@ node('linuxVM') {
                 gitSSH()
                 virtualenv()
                 copy_config()
-                sh 'rm -r ../*@tmp'
          }
 
         } else {
