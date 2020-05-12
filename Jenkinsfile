@@ -17,10 +17,6 @@ node('linuxVM') {
 
     stage("Deploy") {
 
-        withCredentials([file(credentialsId: '3aef7477-0710-48ee-b0de-fb207aeeb069', variable: 'FILE')]) {
-            sh 'cp $FILE config.ini'
-        }
-
         if (env.BRANCH_NAME == "master") {
             printMessage("deploying master branch")
             dir('/home/joel/Projects/python/nhl_lights/') {
@@ -31,8 +27,10 @@ node('linuxVM') {
         } else if (env.BRANCH_NAME == 'develop') {
         dir('/home/joel/Projects/tmp/nhl_lights/') {
                 printMessage("deploying develop branch")
+                deleteDir()
                 gitSSH()
                 virtualenv()
+                copy_config()
          }
 
         } else {
@@ -59,4 +57,10 @@ def virtualenv() {
     . venv/bin/activate
     pip install -r requirements.txt
     """
+}
+
+def copy_config() {
+    withCredentials([file(credentialsId: '3aef7477-0710-48ee-b0de-fb207aeeb069', variable: 'FILE')]) {
+        sh 'cp $FILE config.ini'
+    }
 }
