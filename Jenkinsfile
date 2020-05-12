@@ -38,10 +38,6 @@ node('linuxVM') {
     printMessage("Pipeline End")
 }
 
-options {
-        buildDiscarder(logRotator(numToKeepStr: "10"))
-}
-
 def printMessage(message) {
     echo "${message}"
 }
