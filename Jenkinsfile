@@ -48,7 +48,7 @@ node('linuxVM') {
     post {
         always {
             printMessage("clean up after yourself")
-            cleanWs()
+            deleteDir()
         }
     }
 
