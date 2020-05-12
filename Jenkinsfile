@@ -1,4 +1,3 @@
-
 node('linuxVM') {
     printMessage("Pipeline Start")
 
