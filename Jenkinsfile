@@ -1,60 +1,50 @@
 pipeline {
-    node('linuxVM') {
-        printMessage("Pipeline Start")
+    agent any
+    stages {
+        node('linuxVM') {
+            printMessage("Pipeline Start")
 
-        stage("Fetch Source Code") {
+            stage("Run Tests") {
+                printMessage("haha no testing here")
+            }
 
-            printMessage("not here")
+            stage("Deploy") {
+                if (env.BRANCH_NAME == "master") {
+                    printMessage("deploying master branch")
+                    dir('/home/joel/Projects/python/nhl_lights/') {
+                            deleteDir()
+                            printMessage("deploying develop branch")
+                            gitSSH()
+                            virtualenv()
 
-        }
-
-        //stage("Install Requirements") {
-        //    sh 'make install'
-        //}
-
-        stage("Run Tests") {
-            printMessage("haha no testing here")
-        }
-
-        stage("Deploy") {
-
-            if (env.BRANCH_NAME == "master") {
-                printMessage("deploying master branch")
-                dir('/home/joel/Projects/python/nhl_lights/') {
+                            withCredentials([file(credentialsId: '3aef7477-0710-48ee-b0de-fb207aeeb069', variable: 'FILE')]) {
+                                sh 'cp $FILE config.ini'
+                        }
+                     }
+                } else if (env.BRANCH_NAME == 'develop') {
+                dir('/home/joel/Projects/tmp/nhl_lights/') {
+                    deleteDir()
                         printMessage("deploying develop branch")
                         gitSSH()
                         virtualenv()
 
                         withCredentials([file(credentialsId: '3aef7477-0710-48ee-b0de-fb207aeeb069', variable: 'FILE')]) {
                             sh 'cp $FILE config.ini'
-                    }
-                 }
-            } else if (env.BRANCH_NAME == 'develop') {
-            dir('/home/joel/Projects/tmp/nhl_lights/') {
-                    printMessage("deploying develop branch")
-                    gitSSH()
-                    virtualenv()
+                        }
 
-                    withCredentials([file(credentialsId: '3aef7477-0710-48ee-b0de-fb207aeeb069', variable: 'FILE')]) {
-                        sh 'cp $FILE config.ini'
-                    }
+                }
 
-            }
-
-            } else {
-                printMessage("no deployment specified for this branch")
+                } else {
+                    printMessage("no deployment specified for this branch")
+                }
             }
         }
-
-        post {
-            always {
-                echo 'hi'
-                deleteDir()
-            }
+    }
+    post {
+        always {
+            deleteDir()
+            printMessage("Pipeline End")
         }
-
-
-        printMessage("Pipeline End")
     }
 
     def printMessage(message) {
