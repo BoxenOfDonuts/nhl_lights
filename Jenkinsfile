@@ -14,7 +14,7 @@ node('linuxVM') {
     stage("Testing") {
         sh """
         . venv/bin/activate
-        nosetest
+        nosetests
         """
     }
     stage("Run Tests") {
