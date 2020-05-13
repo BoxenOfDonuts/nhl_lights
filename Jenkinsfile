@@ -3,14 +3,20 @@ node('linuxVM') {
 
     stage("Fetch Source Code") {
 
-        printMessage("not here")
+        gitSSH()
 
     }
 
-    //stage("Install Requirements") {
-    //    sh 'make install'
-    //}
-
+    stage("Install Requirements") {
+        virtualenv()
+    }
+    
+    stage("Testing") {
+        sh """
+        . venv/bin/activate
+        nosetest
+        """
+    }
     stage("Run Tests") {
         printMessage("haha no testing here")
     }
