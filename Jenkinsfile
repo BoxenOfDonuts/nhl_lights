@@ -4,6 +4,7 @@ node('linuxVM') {
     stage("Fetch Source Code") {
 
         gitSSH()
+        copy_config()
 
     }
 
