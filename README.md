@@ -16,7 +16,7 @@ all teams including their id, venue details, division, conference and franchise 
 for a single team instead of the entire league.
 
 ### <a name="Getting Started"></a>Getting Started
-1. Open the teams link above and search for the team you want to monitor. In the JSON response there is an ID value.
+1. Open the teams link above and search for the team you want to monitor. In the JSON response there is an "name" value.
 ```
 {
     "id" : 19,
@@ -33,7 +33,7 @@ for a single team instead of the entire league.
         "tz" : "CDT"
       }
 ```
-Plug that ID number in the config file for the `teamname` value under user
+Plug that value in the config file for the `teamname` value under user. For the above it would be `St. Louis Blues`
 
 2. The `user` field under user is the username of the account running the python. It updates the cron for the respecitve user
 
