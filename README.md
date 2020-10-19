@@ -4,6 +4,7 @@ Flash Hue Lights when your NHL team scores
 # NHL API Documentation
 
 [OpenAPI 3.0 specification file for the NHL API](https://github.com/erunion/sport-api-specifications/tree/master/nhl) thanks to @[erunion](https://github.com/erunion)
+
 [Additional API Documentation](https://github.com/dword4/nhlapi)
 
 ### <a name="teams"></a>Teams
