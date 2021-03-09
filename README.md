@@ -16,7 +16,7 @@ all teams including their id, venue details, division, conference and franchise 
 for a single team instead of the entire league.
 
 ### <a name="Getting Started"></a>Getting Started
-1. Open the teams link above and search for the team you want to monitor. In the JSON response there is an "name" value.
+1. Open the teams link above and search for the team you want to monitor. In the JSON response there is a "name" value.
 ```
 {
     "id" : 19,
