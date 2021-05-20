@@ -11,7 +11,7 @@ from crontab import CronTab
 from time import sleep
 from pythonjsonlogger import jsonlogger
 
-#logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S',level=logging.INFO, filename=constants.LOGFILE)
+# logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S',level=logging.INFO, filename=constants.LOGFILE)
 logHandler = logging.FileHandler(filename=constants.LOGFILE)
 formatter = jsonlogger.JsonFormatter('%(asctime)s %(message)s')
 logHandler.setFormatter(formatter)
@@ -21,6 +21,7 @@ logger = logging.getLogger()
 
 now = datetime.datetime.today().strftime("%Y-%m-%d")
 cst = pytz.timezone('US/Central')
+light_groups = constants.LIGHT_GROUPS
 
 '''
 https://stackoverflow.com/questions/415511/how-to-get-current-time-in-python?rq=1
@@ -41,6 +42,8 @@ class GeneralManager(object):
         self.travel = travel
         self.state = state
         self.score = 0
+        self.bulb_states = []
+
 
 '''
 class Bulbinfo(object):
@@ -67,28 +70,44 @@ class Bulbinfo(object):
             print('could not alert lights: {}'.format(e))
 '''
 
-def bulb_current():
+
+def get_all_bulb_states():
+    for bulb in light_groups:
+        current_state = bulb_current(bulb)
+        GM.bulb_states.append((bulb, current_state))
+
+
+def bulb_current(group):
     try:
-        r = requests.get('{}/groups/1'.format(constants.BRIDGEAPI)).json()['action']
+        r = requests.get('{}/groups/{}'.format(constants.BRIDGEAPI, group)).json()['action']
         if not r['on']:
             return False
         else:
             return {'sat': r['sat'], 'bri': r['bri'], 'hue': r['hue'], 'alert': 'none'}
     except requests.exceptions.RequestException as e:
-        logger.error('Could not get current bulb state ', extra={'error': e})
+        logger.error('Could not get current bulb state ', extra={'error': e, 'bulb_group': group})
+
 
 def flash():
-    a = bulb_current()
     flash_color = {'sat': 254, 'bri': 254, 'hue': 65084, 'alert': 'lselect'}
-    if not a:
-        logger.info('Lights off, not flashing')
-    else:
+    for bulb, color in GM.bulb_states:
+        if not bulb:
+            logger.info('Lights off, not flashing')
+            continue
         try:
-            r = requests.put('{}/groups/1/action'.format(constants.BRIDGEAPI), json=flash_color)
-            sleep(2)
-            r = requests.put('{}/groups/1/action'.format(constants.BRIDGEAPI), json=a)
+            r = requests.put('{}/groups/{}/action'.format(constants.BRIDGEAPI, bulb), json=flash_color)
         except requests.exceptions.RequestException as e:
             logger.error('could not set lights to alert, error: {}', extra={'error': e})
+    sleep(2)
+    for bulb, color in GM.bulb_states:
+        if not bulb:
+            logger.info('Lights off, not returning to normal')
+            continue
+        try:
+            r = requests.put('{}/groups/{}/action'.format(constants.BRIDGEAPI, bulb), json=color)
+        except requests.exceptions.RequestException as e:
+            logger.error('could not set lights to alert, error: {}', extra={'error': e})
+
 
 def build_argparse():
     parser = argparse.ArgumentParser(description='Flashes Hue lights when your team scores', prog='nhl_lights')
@@ -98,9 +117,9 @@ def build_argparse():
     return args
 
 
-def checkgames():
+def check_games():
     try:
-        r = requests.get("{0}schedule?startDate={1}&endDate={1}".format(constants.BASEURL,now))
+        r = requests.get("{0}schedule?startDate={1}&endDate={1}".format(constants.BASEURL, now))
         if r.json()['totalItems'] == 0:
             logger.info('no NHL games today')
             exit()
@@ -125,7 +144,7 @@ def checkgames():
         game_date_obj = dateutil.parser.parse(game_time)
         game_time_cst = game_date_obj.astimezone(cst)
 
-        write_cron(game_time_cst) ## needed if crontabbing
+        write_cron(game_time_cst)  ## needed if crontabbing
         logger.info('Game Later Tonight')
         exit()
     elif GM.travel and args.LetsGoBlues:
@@ -148,7 +167,7 @@ def game_state(url):
         logger.error('Error: {}', extra={'error': e})
 
 
-def game_score(url,state):
+def game_score(url, state):
     try:
         r = requests.get(constants.NHLBASEURL + url)
         GM.state = r.json()['gameData']['status']['abstractGameState']
@@ -157,9 +176,12 @@ def game_score(url,state):
         logger.error('Error', extra={'error': e})
 
     if score > GM.score:
-        logger.info('GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOAAAAAALLLLLLLLLLLLLL', extra={'score': score, 'gm.score': GM.score })
+        logger.info('GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOAAAAAALLLLLLLLLLLLLL', extra={'score': score, 'gm.score': GM.score})
         # delay due to TV
         sleep(10)
+        # get state of bulbs first
+        get_all_bulb_states()
+        # then flash
         flash()
         GM.score = score
     elif score < GM.score:
@@ -171,13 +193,14 @@ def game_score(url,state):
 
 def write_cron(date):
     cron = CronTab(user=constants.CRONUSER)
-    job = cron.new(command='~/Projects/python/nhl_lights/venv/bin/python3 {} -LGB'.format(constants.SCRIPTPATH), comment='nhl lights - delete me')
-    job.setall(date) # sets all to the datetime object)
+    job = cron.new(command='~/Projects/python/nhl_lights/venv/bin/python3 {} -LGB'.format(constants.SCRIPTPATH),
+                   comment='nhl lights - delete me')
+    job.setall(date)  # sets all to the datetime object)
     cron.write()
 
 
 def delete_cron():
-    cron=CronTab(user=constants.CRONUSER)
+    cron = CronTab(user=constants.CRONUSER)
     jobs = cron.find_comment('nhl lights - delete me')
     for job in jobs:
         cron.remove(job)
@@ -186,14 +209,14 @@ def delete_cron():
 
 def main():
     logger.info('Script Starting')
-    checkgames()
+    check_games()
     logger.info('Game state is {} on cron start'.format(GM.state), extra={'state': GM.state})
     while GM.state != 'Live' and GM.state != 'Final':
         game_state(GM.url)
         sleep(60)
     logger.info('Game switched to: {}'.format(GM.state), extra={'state': GM.state})
     while GM.state == 'Live':
-        game_score(GM.url,GM.travel)
+        game_score(GM.url, GM.travel)
         sleep(5)
     if GM.state == 'Final':
         logger.info('Game is over', extra={'state': GM.state})

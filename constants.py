@@ -11,7 +11,6 @@ CONFIGFILE = os.path.join(os.path.dirname(__file__), 'config.ini')
 LOGFILE = '/mnt/nhl_lights/nhl_lights.log'
 SCRIPTPATH = os.path.join(os.path.dirname(__file__), 'nhl_lights.py')
 
-
 config = configparser.ConfigParser()
 config.read(CONFIGFILE)
 
@@ -22,3 +21,4 @@ HUEUSER = config['hue']['user']
 BRIDGEAPI = 'http://{}/api/{}'.format(BRIDGEIP, HUEUSER)
 CRONUSER = config['user']['user']
 TEAMNAME = config['user']['teamname']
+LIGHT_GROUPS = config['lights']['groups'].split(',')
